@@ -19,7 +19,7 @@ app.get("/", (req, res) => res.send("Hello World!"));
 app.get("/api/search", async (req, res) => {
   try {
     console.log(req.query);
-    const searchString = `${req.query.q}`;
+    const searchString = `${req.query.locations}`;
 
     // It uses node-fetch to call the goodreads api, and reads the key from .env
     const response = await fetch(
