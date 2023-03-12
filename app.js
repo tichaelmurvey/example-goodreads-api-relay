@@ -50,28 +50,24 @@ app.get("/api/grid", async (req, res) => {
     lineOffset = distance/numPoints; //Distance between intervals for the purpose of graphing
     totalLatDegrees = distance/latDecimalConversion; //Total degrees of latitude within the grid
     latDegreeInterval = totalLatDegrees/numPoints; //Number of degrees of lattitude between fetch points
+    console.log("got params", originalCoords, distance, numPoints);
 
     for(let i=0; i<numPoints; i++){
       let latToGet = Number(originalCoords[0]) + totalLatDegrees/2 - latDegreeInterval*i;
+      console.log("getting latitude line at " + latToGet);
       let longDecimalConversion = longitudeDistance(latToGet); //Distance between degrees of longitude at the given latitude
       let totalLongDegrees = distance/longDecimalConversion;
-      let longDegreeInterval = totalLongDegrees/numPoints;
+      minCoord = [latToGet, originalCoords[1] - totalLongDegrees/2];
+      maxCoord = [latToGet, originalCoords[1] + totalLongDegrees/2];
       coordset = [];
-      for(let j=0; j<numPoints; j++){
-          let newCoord = [0,0];
-          newCoord[0] = latToGet;
-          newCoord[1] = originalCoords[1] - totalLongDegrees/2 + longDegreeInterval*j;
-          coordset.push(newCoord.join(","));
-      }
-      let latString = coordset.join("|");
-      console.log("latstring", latString);
-      // const line = await fetch(
-      //   `${process.env.TOPO_URL}${latString}`
-      // )
-      fetchList.push(latString);
+      let coordString = coordset.join("|");
+      fetchList.push(coordString);
     }
     console.log("getting " + fetchList.length + " lines");
-    const response = await Promise.all(fetchList.map(line=>fetch(line))).then(function(responses){
+    const response = await Promise.all(
+      fetchList.map(line=>fetch(`${process.env.TOPO_URL}${line}&sample=${numPoints}`))
+    )
+    .then(function(responses){
       return Promise.all(responses.map(function(response){
           return response.json();
       }))
