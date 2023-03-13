@@ -47,25 +47,25 @@ app.get("/api/grid", async (req, res) => {
     const distance = `${req.query.distance}`;
     const numPoints = `${req.query.lod}`;
 
-    lineOffset = distance/numPoints; //Distance between intervals for the purpose of graphing
-    totalLatDegrees = distance/latDecimalConversion; //Total degrees of latitude within the grid
-    latDegreeInterval = totalLatDegrees/numPoints; //Number of degrees of lattitude between fetch points
+    let lineOffset = distance/numPoints; //Distance between intervals for the purpose of graphing
+    let totalLatDegrees = distance/latDecimalConversion; //Total degrees of latitude within the grid
+    let latDegreeInterval = totalLatDegrees/numPoints; //Number of degrees of lattitude between fetch points
     console.log("got params", originalCoords, distance, numPoints);
 
     for(let i=0; i<numPoints; i++){
       let latToGet = Number(originalCoords[0]) + totalLatDegrees/2 - latDegreeInterval*i;
+      let baseLong = Number(originalCoords[1]);
       console.log("getting latitude line at " + latToGet);
       let longDecimalConversion = longitudeDistance(latToGet); //Distance between degrees of longitude at the given latitude
       let totalLongDegrees = distance/longDecimalConversion;
-      minCoord = [latToGet, originalCoords[1] - totalLongDegrees/2];
-      maxCoord = [latToGet, originalCoords[1] + totalLongDegrees/2];
-      coordset = [];
-      let coordString = coordset.join("|");
+      let minCoord = [latToGet, baseLong - totalLongDegrees/2];
+      let maxCoord = [latToGet, baseLong + totalLongDegrees/2];
+      let coordString = minCoord.join(",") + "|" + maxCoord.join(",");
       fetchList.push(coordString);
     }
     console.log("getting " + fetchList.length + " lines");
     const response = await Promise.all(
-      fetchList.map(line=>fetch(`${process.env.TOPO_URL}${line}&sample=${numPoints}`))
+      fetchList.map(line=>fetch(`${process.env.TOPO_URL}${line}&samples=${numPoints}`))
     )
     .then(function(responses){
       return Promise.all(responses.map(function(response){
