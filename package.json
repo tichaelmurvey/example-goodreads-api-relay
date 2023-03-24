@@ -14,6 +14,7 @@
     "@babel/core": "^7.6.4",
     "@babel/preset-env": "^7.6.3",
     "@babel/preset-react": "^7.6.3",
+    "axios": "^1.3.4",
     "babel-loader": "^8.0.6",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
@@ -34,6 +35,5 @@
   "bugs": {
     "url": "https://github.com/gskumawat0/example-goodreads-api-relay/issues"
   },
-  "homepage": "https://github.com/gskumawat0/example-goodreads-api-relay#readme",
-  "devDependencies": {}
+  "homepage": "https://github.com/gskumawat0/example-goodreads-api-relay#readme"
 }

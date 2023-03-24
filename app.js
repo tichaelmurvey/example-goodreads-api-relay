@@ -7,37 +7,9 @@ const convert = require("xml-js");
 var cors = require("cors");
 const app = express();
 const port = 3000;
-// const limiter = rateLimit({
-//   windowMs: 1000, // 1 second
-//   max: 1, // limit each IP to 1 requests per windowMs
-// });
-//app.use(limiter);
 app.use(cors());
 app.get("/", (req, res) => res.send("Hello World!"));
 const latDecimalConversion = 111000; //Distance between degrees of latitude
-
-// Our Goodreads relay route!
-app.get("/api/search", async (req, res) => {
-  try {
-    console.log(req.query);
-    const searchString = `${req.query.locations}`;
-
-    // It uses node-fetch to call the goodreads api, and reads the key from .env
-    const response = await fetch(
-      `${process.env.TOPO_URL}${searchString}`,
-    );
-    //more info here https://www.goodreads.com/api/index#search.books
-    data = await response.json();
-    return res.json({
-      results: data.results
-    });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-});
 
 app.get("/api/grid", async (req, res) => {
   try {
@@ -47,40 +19,43 @@ app.get("/api/grid", async (req, res) => {
     const distance = `${req.query.distance}`;
     const numPoints = `${req.query.lod}`;
 
-    let lineOffset = distance/numPoints; //Distance between intervals for the purpose of graphing
-    let totalLatDegrees = distance/latDecimalConversion; //Total degrees of latitude within the grid
-    let latDegreeInterval = totalLatDegrees/numPoints; //Number of degrees of lattitude between fetch points
+    let lineOffset = distance / numPoints; //Distance between intervals for the purpose of graphing
+    let totalLatDegrees = distance / latDecimalConversion; //Total degrees of latitude within the grid
+    let latDegreeInterval = totalLatDegrees / numPoints; //Number of degrees of lattitude between fetch points
     console.log("got params", originalCoords, distance, numPoints);
 
-    for(let i=0; i<numPoints; i++){
-      let latToGet = Number(originalCoords[0]) + totalLatDegrees/2 - latDegreeInterval*i;
+    for (let i = 0; i < numPoints; i++) {
+      let latToGet = Number(originalCoords[0]) + totalLatDegrees / 2 - latDegreeInterval * i;
       let baseLong = Number(originalCoords[1]);
       console.log("getting latitude line at " + latToGet);
       let longDecimalConversion = longitudeDistance(latToGet); //Distance between degrees of longitude at the given latitude
-      let totalLongDegrees = distance/longDecimalConversion;
-      let minCoord = [latToGet, baseLong - totalLongDegrees/2];
-      let maxCoord = [latToGet, baseLong + totalLongDegrees/2];
-      let coordString = minCoord.join(",") + "|" + maxCoord.join(",");
-      fetchList.push(coordString);
+      let totalLongDegrees = distance / longDecimalConversion;
+      let minCoord = [latToGet, baseLong - totalLongDegrees / 2];
+      let maxCoord = [latToGet, baseLong + totalLongDegrees / 2];
+      // let coords = minCoord.join(",") + "|" + maxCoord.join(",");
+      let coords = [minCoord, maxCoord]
+      fetchList.push(coords);
     }
     console.log("getting " + fetchList.length + " lines");
-    const response = await Promise.all(
-      fetchList.map(line=>fetch(`${process.env.TOPO_URL}${line}&samples=${numPoints}`))
+    console.log(fetchList);
+    Promise.all(
+      fetchList.map(async(line, index) => {
+        //Wait a bit to return
+        return new Promise(resolve => setTimeout(resolve, 1100*index))
+        .then(async() => {
+          const response = await fetch(`${process.env.TOPO_URL}${line[0].join(",") + "|" + line[1].join(",")}&samples=${numPoints}`)
+          console.log("got line at " + line[0][0])
+          return await response.json()  
+        })
+      })
     )
-    .then(function(responses){
-      return Promise.all(responses.map(function(response){
-          return response.json();
-      }))
-      }).catch(function(error){
-      console.log(error);
-    })
-
-    // const response = await fetch(
-    //   `${process.env.TOPO_URL}${searchString}`
-    // );
-    return res.json({
-      results: response
-    });
+     .then(
+      response => {
+        res.json({
+          results: response
+        });
+      }
+     )
   } catch (err) {
     return res.status(500).json({
       success: false,
@@ -89,11 +64,19 @@ app.get("/api/grid", async (req, res) => {
   }
 });
 
-function longitudeDistance(latitude){
+
+function longitudeDistance(latitude) {
   var latitudeRadians = latitude * Math.PI / 180;
-  return ((Math.PI/180) *6368000*Math.cos(latitudeRadians));
+  return ((Math.PI / 180) * 6368000 * Math.cos(latitudeRadians));
 }
 
 
 app.listen(port, () => console.log(`listening on port ${port}!`));
 
+
+// const apiPromises = id_array.map(async(id, index) => {
+//   return new Promise(resolve => setTimeout(resolve, delay * index)).then(async() => {
+//     const response = await fetch(url, obj);
+//     return await response.json();
+//   })
+// });
