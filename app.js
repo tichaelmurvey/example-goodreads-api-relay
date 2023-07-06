@@ -17,7 +17,7 @@ app.get("/proxy", async (req, res) => {
   //URL variables: coords, distance, lod
   let lod = req.query.lod;
   let distance = req.query.distance;
-  const originalCoords = `${req.query.coords}`.split(",");
+  let originalCoords = `${req.query.coords}`.split(",");
   console.log("Received proxy request at " + originalCoords + " with distance " + distance + " and lod " + lod);
   let promiseList = [];
   let totalLatDegrees = distance / latDecimalConversion; //Total degrees of latitude within the grid
