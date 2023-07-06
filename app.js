@@ -61,3 +61,8 @@ app.get("/proxy", async (req, res) => {
 
 
 app.listen(port, () => console.log(`listening on port ${port}!`));
+
+function longitudeDistance(latitude) {
+  var latitudeRadians = latitude * Math.PI / 180;
+  return ((Math.PI / 180) * 6368000 * Math.cos(latitudeRadians));
+}
