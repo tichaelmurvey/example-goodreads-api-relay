@@ -14,15 +14,14 @@ const latDecimalConversion = 111000; //Distance between degrees of latitude
 app.get("/", (req, res) => res.send("Hello World!"));
 
 app.get("/proxy", async (req, res) => {
-  console.log("got a request at proxy endpoint")
   //URL variables: coords, distance, lod
   let lod = req.query.lod;
   let distance = req.query.distance;
   const originalCoords = `${req.query.coords}`.split(",");
+  console.log("Received proxy request at " + originalCoords + " with distance " + distance + " and lod " + lod);
   let promiseList = [];
   let totalLatDegrees = distance / latDecimalConversion; //Total degrees of latitude within the grid
   let latDegreeInterval = totalLatDegrees / lod; //Number of degrees of latitude between fetch points
-  console.log("calculated variables")
 
   for (let i = 0; i < lod; i++) {
     let latToGet = Number(originalCoords[0]) + totalLatDegrees / 2 - latDegreeInterval * i;
@@ -32,8 +31,10 @@ app.get("/proxy", async (req, res) => {
     let minCoord = [latToGet, baseLong - totalLongDegrees / 2];
     let maxCoord = [latToGet, baseLong + totalLongDegrees / 2];
     //console.log("getting line between" + minCoord + " and " + maxCoord);
+    let fetchURL = `${process.env.TOPO_URL}${minCoord.join(",") + "|" + maxCoord.join(",")}&samples=${lod}`;
+    console.log(fetchURL)
     promiseList.push(
-      fetch(`${process.env.TOPO_URL}${minCoord.join(",") + "|" + maxCoord.join(",")}&samples=${lod}`)
+      fetch(fetchURL)
     )
   }
   console.log("constructed promise list");
